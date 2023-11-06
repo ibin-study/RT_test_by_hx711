@@ -20,21 +20,23 @@ class PWMControl:
     def esc_arming(self):
         time.sleep(0.5)
         self.pwm.ChangeDutyCycle(1)
-        time.sleep(0.5)
+        time.sleep(3)
         self.pwm.ChangeDutyCycle(0)
         time.sleep(0.5)
         print("\nESC Arming OK\n")
 
     def stop(self):
+        self.duty_cycle = 0
         self.pwm.stop()
     
     def stop_end(self):
+        self.duty_cycle = 0
         self.pwm.stop()
         GPIO.cleanup()
 
     def control_by_key(self):
         try:
-            while True:                      # Loop until Ctl C is pressed to stop.
+            while True:         # Loop until Ctl C is pressed to stop.
                 command = input("pwm Duty Cucle Control [1:+5, 2:-5, 4:+1, 5:-1, 0:set 0] : ")
                 if command == "1":
                     self.duty_cycle += 5
@@ -60,9 +62,24 @@ class PWMControl:
         
     def thrust_test(self, low_thrust: int, high_thrust: int):
         self.duty_cycle = 0
-        # try:
-        #     for i in range(low_thrust, high_thrust):
+        try:
+            input("Thrust Test ready... If you want start Test, Press Enter...")
+            print("Test Start!\n")
+            time.sleep(1)
+            for i in range(low_thrust, high_thrust):
+                self.duty_cycle = i
+                self.pwm.ChangeDutyCycle(i)
+                print("Duty Cycle(%) : {}\n".format(self.duty_cycle))
+                time.sleep(0.2)
+            time.sleep(1)
+            input("Reached High Thrust... Press Enter to stop motor...\n")
+            self.stop_end()
+            print("Test Done!!")
 
+        except KeyboardInterrupt:
+            print("\nCtl C pressed - ending program")
+            self.duty_cycle = 0
+            self.stop_end()
 
 if __name__ =="__main__":
     pc = PWMControl(pin_num=32, pwm_hz=3000)
