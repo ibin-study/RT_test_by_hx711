@@ -1,24 +1,27 @@
 #!/usr/bin/env python3
 
 import time
+import rospy
 import sys
 import gpiod
 import os.path
-from hx711 import HX711
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from hx711 import HX711
+from record_data import RecordLoadCell
+from std_msgs.msg import String
 
 
-class RecordLoadCell:
-    def __init__(self, dout_pin: int, sck_pin: int):
+class RecordDataROS:
+    def __init__(self, dout_pin: int, sck_pin: int):              
         # Calibration value to obtain accurate weight
         self.referenceUnit = -1063
 
         # Connect GPIOD
         self.chip = None
         self.chip = gpiod.chip("0", gpiod.chip.OPEN_BY_NUMBER)
+
 
         # Setting HX711 module
         self.hx = HX711(dout = dout_pin, pd_sck = sck_pin, chip = self.chip)
@@ -40,13 +43,55 @@ class RecordLoadCell:
         self.i = 1
 
         # You have to redefine your own directory and file name
-        self.save_address = "/home/soobin/RT_test_data/test" 
+        self.save_address = "/home/soobin/RT_test_data/test"
 
+        # ROS message and Declare subscriber
+        self.status_msg = ""
+        self.record_now = False
+        self.test_status_sub = rospy.Subscriber("test_status", String, self.test_status_callback)
+
+
+    def test_status_callback(self, msg):
+        self.status_msg = msg.data
+        
+        if self.status_msg == "TestStart":
+            print("Test Started!")
+            self.record_now = True
+        
+        elif self.status_msg == "TestEnd":
+            print("Test Ended!")
+            self.record_now = False
 
     def tare(self):
         self.hx.tare()
         print("Tare done! Add weight now...")
         time.sleep(1)
+    
+
+    def get_data(self):
+        while not self.record_now:
+            print("Wating for start msg...")
+            time.sleep(1)
+            continue
+
+        print("Start recording ...\n")
+
+        while True:
+            if self.record_now == False:
+                break
+            try:
+                self.record_time = time.time()
+                self.record_val = self.hx.get_weight(1)
+                self.total_data = np.append(self.total_data, [round(self.record_time,4),round(self.record_val, 2)], axis = 0)
+                
+                # print(f"Weight : {self.record_val:.2f} / Recorded Time : {self.record_time:.4f}")
+                time.sleep(0.001)
+
+            except (KeyboardInterrupt, SystemExit):
+                self.data_recording()
+        
+        print("Stop recording...\n")
+        self.data_recording()
 
     def data_recording(self):
         # Reset GPIOD (By restart pin)
@@ -120,21 +165,23 @@ class RecordLoadCell:
         print("Bye!")
         sys.exit()
 
-    def get_data(self):
-        while True:
-            try:
-                self.record_time = time.time()
-                self.record_val = self.hx.get_weight(1)
-                self.total_data = np.append(self.total_data, [round(self.record_time,4),round(self.record_val, 2)], axis = 0)
-                
-                print(f"Weight : {self.record_val:.2f} / Recorded Time : {self.record_time:.4f}")
-                time.sleep(0.001)
-
-            except (KeyboardInterrupt, SystemExit):
-                self.data_recording()
 
 
 
 if __name__ == "__main__":
-    rlc = RecordLoadCell(dout_pin = 11, sck_pin = 7)
-    rlc.get_data()
+    try:
+        while not rospy.is_shutdown():
+            rospy.init_node("Test_status_listener", anonymous=True)
+            data_recorder = RecordDataROS(dout_pin = 11, sck_pin = 7)
+            data_recorder.get_data()
+            rospy.spin()
+    
+    except rospy.ROSInterruptException:
+        print("\nCtrl+C pressed - terminating program\n")
+        data_recorder.chip.reset()
+        sys.exit()
+
+    # finally:
+    #     print("\nTerminating program\n")
+    #     data_recorder.chip.reset()
+    #     sys.exit()   
