@@ -20,8 +20,8 @@ class PWMControl:
     def esc_arming(self):
         time.sleep(0.5)
         self.pwm.ChangeDutyCycle(1)
-        time.sleep(3)
-        self.pwm.ChangeDutyCycle(0)
+        time.sleep(1)
+        # self.pwm.ChangeDutyCycle(0)
         time.sleep(0.5)
         print("\nESC Arming OK\n")
 
@@ -67,7 +67,7 @@ class PWMControl:
             time.sleep(1)
             for i in range(low_thrust, high_thrust):
                 self.duty_cycle = i
-                self.pwm.ChangeDutyCycle(i)
+                self.pwm.ChangeDutyCycle(self.duty_cycle)
                 print("Duty Cycle(%) : {}\n".format(self.duty_cycle))
                 time.sleep(0.2)
             time.sleep(1)
@@ -80,19 +80,24 @@ class PWMControl:
             self.duty_cycle = 0
             self.stop_end()
     
-    def delay_time_test(self, low_thrust: int, high_thrust: int):
+    def delay_time_test(self, cw_max: int, ccw_max: int):
         self.duty_cycle = 0
         try:
-            input("Delay time Test ready... If you want start Test, Press Enter...")
             print("Test Start!\n")
             time.sleep(1)
-            for i in range(low_thrust, high_thrust):
-                self.duty_cycle = i
-                self.pwm.ChangeDutyCycle(i)
-                print("Duty Cycle(%) : {}\n".format(self.duty_cycle))
-                time.sleep(0.2)
+            self.duty_cycle = cw_max
+            self.pwm.ChangeDutyCycle(self.duty_cycle)
+            print("Duty Cycle(%) : {}\n".format(self.duty_cycle))
             time.sleep(1)
-            input("Reached High Thrust... Press Enter to stop motor...\n")
+
+            input("Press Enter for maximum reverse thrust...")
+
+            self.duty_cycle = ccw_max
+            self.pwm.ChangeDutyCycle(self.duty_cycle)
+            print("Duty Cycle(%) : {}\n".format(self.duty_cycle))
+            time.sleep(1)
+
+            input("Reverse Thrust Ok... Press Enter to stop motor...\n")
             self.stop_end()
             print("Test Done!!")
 

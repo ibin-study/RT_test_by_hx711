@@ -84,7 +84,7 @@ class RecordDataROS:
                 self.record_val = self.hx.get_weight(1)
                 self.total_data = np.append(self.total_data, [round(self.record_time,4),round(self.record_val, 2)], axis = 0)
                 
-                # print(f"Weight : {self.record_val:.2f} / Recorded Time : {self.record_time:.4f}")
+                print(f"Weight : {self.record_val:.2f} / Recorded Time : {self.record_time:.4f}")
                 time.sleep(0.001)
 
             except (KeyboardInterrupt, SystemExit):
