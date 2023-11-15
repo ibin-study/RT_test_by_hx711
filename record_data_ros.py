@@ -16,7 +16,7 @@ from std_msgs.msg import String
 class RecordDataROS:
     def __init__(self, dout_pin: int, sck_pin: int):              
         # Calibration value to obtain accurate weight
-        self.referenceUnit = -1063
+        self.referenceUnit = 1063
 
         # Connect GPIOD
         self.chip = None
@@ -31,6 +31,7 @@ class RecordDataROS:
         self.tare()
 
         # Initialize Variables
+        self.start_time = 0.0
         self.record_time = 0.0
         self.record_val = 0.0
         self.total_data = np.array([])
@@ -75,21 +76,21 @@ class RecordDataROS:
             continue
 
         print("Start recording ...\n")
+        self.start_time = time.time()
 
         while True:
             if self.record_now == False:
                 break
             try:
-                self.record_time = time.time()
+                self.record_time = time.time() - self.start_time
                 self.record_val = self.hx.get_weight(1)
                 self.total_data = np.append(self.total_data, [round(self.record_time,4),round(self.record_val, 2)], axis = 0)
                 
                 print(f"Weight : {self.record_val:.2f} / Recorded Time : {self.record_time:.4f}")
-                time.sleep(0.001)
 
             except (KeyboardInterrupt, SystemExit):
                 self.data_recording()
-        
+        # time.sleep(3)
         print("Stop recording...\n")
         self.data_recording()
 

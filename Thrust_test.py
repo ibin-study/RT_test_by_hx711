@@ -44,5 +44,5 @@ class ThrustTest:
 
 if __name__ == "__main__":
     th_test = ThrustTest(pin_num=32, pwm_hz=3000)
-    th_test.test_start(low_thrust=30, high_thrust=80)
+    th_test.test_start(low_thrust=30, high_thrust=79)
     th_test.test_end()

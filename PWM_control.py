@@ -88,13 +88,14 @@ class PWMControl:
             self.duty_cycle = cw_max
             self.pwm.ChangeDutyCycle(self.duty_cycle)
             print("Duty Cycle(%) : {}\n".format(self.duty_cycle))
-            time.sleep(1)
-
-            input("Press Enter for maximum reverse thrust...")
-
+            
+            for i in range(3):
+                print(i+1)
+                time.sleep(1)
+            
             self.duty_cycle = ccw_max
             self.pwm.ChangeDutyCycle(self.duty_cycle)
-            print("Duty Cycle(%) : {}\n".format(self.duty_cycle))
+            print("\nDuty Cycle(%) : {}\n".format(self.duty_cycle))
             time.sleep(1)
 
             input("Reverse Thrust Ok... Press Enter to stop motor...\n")
